@@ -2,25 +2,28 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from main import OPENAI_API_KEY
+# import json
 import requests
+import os
 
 class k8s_request():
 
+    # def __init__(self):
     def __init__(self, user_query):
         # Necessary certificates
-        self.ca_cert_path = "./certs/cacert.crt"
-        self.client_cert_path = "./certs/apiserver-kubelet-client.crt"
-        self.client_key_path = "./certs/apiserver-kubelet-client.key"
+        self.ca_cert_path = os.path.abspath("certs/ca.crt")
+        self.client_cert_path = os.path.abspath("certs/apiserver-kubelet-client.crt")
+        self.client_key_path = os.path.abspath("certs/apiserver-kubelet-client.key")
 
         # Namespaces to be ignored
-        self.label_selector = 'namespace notin (armada, cert-manager, flux-helm, kube-system)'
+        self.excluded_namespaces = ["armada", "cert-manager", "flux-helm", "kube-system"]
 
         # Necessary API address
-        self.api_server_url = "https://localhost:6443"
+        self.api_server_url = "https://192.168.206.1:6443"
 
         # User query
+        # self.query = "What is the status of my pods?"
         self.query = user_query
-
 
 
     def get_endpoint(self):
@@ -34,11 +37,14 @@ class k8s_request():
 
     def get_api_completion(self):
         # Initiate OpenAI
-        llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY)
+        llm = ChatOpenAI(openai_api_key = OPENAI_API_KEY)
+
+        # Expected llm response format
+        format_response = "api: <api_completion>"
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an API generator, based on the user input you will sugest the best API endpoint to retrieve the information from a kubernetes cluster. You will only provide the API information that comes after the IP:PORT. Make sure to only provide the API endpoint and nothing more in your answer"),
+        ("system", f"You are an API generator, based on the user input you will sugest the best API endpoint to retrieve the information from a kubernetes cluster.\n\nYou will only provide the API information that comes after the IP:PORT.\n\nMake sure the providade endpoint is a valid one.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}."),
         ("user", "{input}")
         ])
 
@@ -47,25 +53,35 @@ class k8s_request():
 
         # Get completion
         completion = chain.invoke({"input": self.query})
+        clean_completion = completion.split(":")[1].strip()
+        # print(clean_completion)
 
-        return completion
+        return clean_completion
+
+    def filter_response(self, response):
+        pods = response.json().get('items', [])
+        filtered_pods = [
+            pod for pod in pods if pod['metadata']['namespace'] not in self.excluded_namespaces]
+
+        return filtered_pods
 
     def get_API_response(self):
         # Define Kubernetes API endpoint
-        api_endpoint = self.get_endpoint(self.api_server_url)
-
-        # Define params for the API request
-        params = {'labelSelector': self.label_selector}
+        api_endpoint = self.get_endpoint()
 
         # Load Kubernetes certificates
         cert = (self.client_cert_path, self.client_key_path)
         verify = self.ca_cert_path
 
         # API request
-        response = requests.get(api_endpoint, cert=cert, verify=verify, params=params)
+        response = requests.get(api_endpoint, cert=cert, verify=verify)
 
         if response.status_code == 200:
-            return response.json()
+            # Filter response for undesired namespaces
+            filtered_response = self.filter_response(response)
+            # with open ("resposta.json", "w") as f:
+            #     f.write(json.dumps(filtered_response))
+            return filtered_response
         else:
             print(f"Error trying to make API request:\n {response.status_code}, {response.text}")
 
@@ -76,3 +92,6 @@ class stx_request():
 
 class openstack_request():
     pass
+
+# test = k8s_request()
+# k8s_request.get_API_response(test)
