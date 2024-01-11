@@ -30,7 +30,6 @@ class k8s_request():
         completion = self.get_api_completion()
         if completion[0] == "/":
             api_endpoint = f'{self.api_server_url}{completion}'
-            print(api_endpoint)
         else:
             api_endpoint = f'{self.api_server_url}/{completion}'
 
@@ -79,7 +78,8 @@ class k8s_request():
         if response.status_code == 200:
             # Filter response for undesired namespaces
             filtered_response = self.filter_response(response)
-            return filtered_response
+            buit_text_response = f"API {api_endpoint} response = {filtered_response}"
+            return buit_text_response
         else:
             print(f"Error trying to make API request:\n {response.status_code}, {response.text}")
 
