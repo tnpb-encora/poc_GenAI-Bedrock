@@ -1,15 +1,13 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
-from main import OPENAI_API_KEY
-# import json
 import requests
 import os
 
 class k8s_request():
 
     # def __init__(self):
-    def __init__(self, user_query):
+    def __init__(self, user_query, key):
         # Necessary certificates
         self.ca_cert_path = os.path.abspath("certs/ca.crt")
         self.client_cert_path = os.path.abspath("certs/apiserver-kubelet-client.crt")
@@ -18,11 +16,13 @@ class k8s_request():
         # Namespaces to be ignored
         self.excluded_namespaces = ["armada", "cert-manager", "flux-helm", "kube-system"]
 
+        # API key
+        self.api_key = key
+
         # Necessary API address
         self.api_server_url = "https://192.168.206.1:6443"
 
         # User query
-        # self.query = "What is the status of my pods?"
         self.query = user_query
 
 
@@ -30,6 +30,7 @@ class k8s_request():
         completion = self.get_api_completion()
         if completion[0] == "/":
             api_endpoint = f'{self.api_server_url}{completion}'
+            print(api_endpoint)
         else:
             api_endpoint = f'{self.api_server_url}/{completion}'
 
@@ -37,7 +38,7 @@ class k8s_request():
 
     def get_api_completion(self):
         # Initiate OpenAI
-        llm = ChatOpenAI(openai_api_key = OPENAI_API_KEY)
+        llm = ChatOpenAI(openai_api_key = self.api_key)
 
         # Expected llm response format
         format_response = "api: <api_completion>"
@@ -54,7 +55,6 @@ class k8s_request():
         # Get completion
         completion = chain.invoke({"input": self.query})
         clean_completion = completion.split(":")[1].strip()
-        # print(clean_completion)
 
         return clean_completion
 
@@ -79,8 +79,6 @@ class k8s_request():
         if response.status_code == 200:
             # Filter response for undesired namespaces
             filtered_response = self.filter_response(response)
-            # with open ("resposta.json", "w") as f:
-            #     f.write(json.dumps(filtered_response))
             return filtered_response
         else:
             print(f"Error trying to make API request:\n {response.status_code}, {response.text}")
