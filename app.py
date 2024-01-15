@@ -9,11 +9,13 @@ from api_request import k8s_request
 from openai import OpenAI
 import os
 
-def main():
-    set_openai_key()
-    initiate_generator()
-    query = input()
-    ask(query)
+### To locally test the app ,uncomment this function and the last two lines of this file
+# def main():
+#     set_openai_key()
+#     initiate_generator()
+#     query = input()
+#     ask(query)
+
 
 def initiate_generator():
     # Initiate LLM
@@ -27,6 +29,7 @@ def initiate_generator():
                 retriever=retriever,
                 memory=memory)
 
+
 def create_vectorstore(llm):
     # Create Chroma vector store
     data_start = "start vectorstore"
@@ -39,20 +42,19 @@ def create_vectorstore(llm):
 
     return memory, retriever
 
+
 def ask(query):
-    exit_ = ""
-    while exit_ != "exit":
-        query += ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
+    query += ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
+    response = generator.invoke(query)
+    if "I'm sorry" in response['answer'] or "there is no information" in response['answer']:
+        feed_vectorstore(query)
         response = generator.invoke(query)
-        if "I'm sorry" in response['answer'] or "there is no information" in response['answer']:
-            feed_vectorstore(query)
-            response = generator.invoke(query)
-            print(response['answer'])
-        else:
-            print(response['answer'])
-        query = input().lower()
-        if query == "exit":
-            exit_ = query
+        print(response['answer'])
+    else:
+        print(response['answer'])
+    ## Uncommnet to test locally
+    # query = input().lower()
+
 
 def feed_vectorstore(query):
     llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY)
@@ -75,7 +77,6 @@ def feed_vectorstore(query):
                 memory=memory)
 
 
-
 def get_openai_key():
     print("Hello! This is the chatbot for your StarlingX cluster.")
     print("To procced, you need to provide an OpenAI API key:")
@@ -92,12 +93,14 @@ def get_openai_key():
 
     return api_key
 
+
 def set_openai_key():
     global OPENAI_API_KEY
     if os.environ.get('OPENAI_API_KEY'):
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
     else:
         OPENAI_API_KEY = get_openai_key()
+
 
 def is_api_key_valid(key):
     try:
@@ -112,5 +115,6 @@ def is_api_key_valid(key):
     else:
         return True
 
-if __name__ == "__main__":
-    main()
+
+# if __name__ == "__main__":
+#     main()

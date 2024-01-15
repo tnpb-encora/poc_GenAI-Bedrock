@@ -90,6 +90,3 @@ class stx_request():
 
 class openstack_request():
     pass
-
-# test = k8s_request()
-# k8s_request.get_API_response(test)
