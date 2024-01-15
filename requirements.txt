@@ -1,4 +1,6 @@
 langchain
 langchain-openai
 tiktoken
-chromadb
+chromadb==0.3.29
+flask-restful
+flask

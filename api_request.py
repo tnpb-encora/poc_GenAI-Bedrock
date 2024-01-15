@@ -44,7 +44,7 @@ class k8s_request():
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", f"You are an API generator, based on the user input you will sugest the best API endpoint to retrieve the information from a kubernetes cluster.\n\nYou will only provide the API information that comes after the IP:PORT.\n\nMake sure the providade endpoint is a valid one.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}."),
+        ("system", f"You are an API generator, based on the user input you will sugest the best API endpoint to retrieve the information from a kubernetes cluster.\n\nYou will only provide the API information that comes after the IP:PORT.\n\nMake sure the providade endpoint is a valid one.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
         ("user", "{input}")
         ])
 
