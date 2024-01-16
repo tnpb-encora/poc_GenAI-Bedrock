@@ -49,9 +49,9 @@ def ask(query):
     if "I'm sorry" in response['answer'] or "there is no information" in response['answer']:
         feed_vectorstore(query)
         response = generator.invoke(query)
-        print(response['answer'])
-    else:
-        print(response['answer'])
+
+    print(response['answer'])
+    return response['answer']
     ## Uncommnet to test locally
     # query = input().lower()
 
