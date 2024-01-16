@@ -7,9 +7,6 @@ WORKDIR /app
 # Copy the requirements file into the container
 COPY requirements/requirements.txt .
 
-# OpenAI API key enviroment variable
-ARG OPENAI_API_KEY=
-
 # Install the Python dependencies
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
