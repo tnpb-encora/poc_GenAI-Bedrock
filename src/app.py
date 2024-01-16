@@ -12,7 +12,7 @@ import os
 ### To locally test the app ,uncomment this function and the last two lines of this file
 # def main():
 #     set_openai_key()
-#     initiate_generator()
+    #     initiate_generator()
 #     query = input()
 #     ask(query)
 
@@ -77,29 +77,15 @@ def feed_vectorstore(query):
                 memory=memory)
 
 
-def get_openai_key():
-    print("Hello! This is the chatbot for your StarlingX cluster.")
-    print("To procced, you need to provide an OpenAI API key:")
-    valid_key = False
-
-    while valid_key == False:
-        api_key = input()
-        valid_key = is_api_key_valid(api_key)
-        if valid_key == False:
-            print("The provided key is not valid."
-                  "Please provide a valid OpenAI API key:")
-
-    print("Thank you! If at any point you want to close the chatbot just type 'exit'")
-
-    return api_key
-
-
 def set_openai_key():
     global OPENAI_API_KEY
-    if os.environ.get('OPENAI_API_KEY'):
+    OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+    try:
+        global OPENAI_API_KEY
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
-    else:
-        OPENAI_API_KEY = get_openai_key()
+        is_api_key_valid(OPENAI_API_KEY)
+    except:
+        raise Exception("Error while trying to set OpenAI API Key variable")
 
 
 def is_api_key_valid(key):
@@ -111,7 +97,7 @@ def is_api_key_valid(key):
             max_tokens=5
         )
     except:
-        return False
+        raise Exception("The provided key is not valid.")
     else:
         return True
 
