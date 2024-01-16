@@ -1,3 +1,6 @@
+> **_NOTE_**: Many changes were made to have this application run in a container,
+> it does not support local runs without changes.
+
 # StarlingX ChatBot demo
 
 The purpose of this demo is to demonstrate a chatbot that is capable of make
@@ -92,5 +95,3 @@ cd $HOME/poc_GenAI
 source venv/bin/activate
 python3 main.py
 ```
-
-> **_NOTE_**: The chatbot is currently under development and will not work.
