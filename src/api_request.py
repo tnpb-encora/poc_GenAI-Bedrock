@@ -9,9 +9,9 @@ class k8s_request():
     # def __init__(self):
     def __init__(self, user_query, key):
         # Necessary certificates
-        self.ca_cert_path = os.path.abspath("certs/ca.crt")
-        self.client_cert_path = os.path.abspath("certs/apiserver-kubelet-client.crt")
-        self.client_key_path = os.path.abspath("certs/apiserver-kubelet-client.key")
+        self.ca_cert_path = os.path.abspath("/etc/kubernetes/pki/ca.crt")
+        self.client_cert_path = os.path.abspath("/etc/kubernetes/pki/apiserver-kubelet-client.crt")
+        self.client_key_path = os.path.abspath("/etc/kubernetes/pki/apiserver-kubelet-client.key")
 
         # Namespaces to be ignored
         self.excluded_namespaces = ["armada", "cert-manager", "flux-helm", "kube-system"]
