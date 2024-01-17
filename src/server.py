@@ -19,4 +19,4 @@ api.add_resource(Users, '/')
 if __name__ == "__main__":
     chat.set_openai_key()
     chat.initiate_generator()
-    app.run(port=2000)
+    app.run(host="0.0.0.0", port=2000)
