@@ -19,7 +19,10 @@ import os
 
 def initiate_generator():
     # Initiate LLM
-    llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY)
+    llm = ChatOpenAI(
+        model_name="gpt-3.5-turbo",
+        temperature=0.7,
+        openai_api_key=OPENAI_API_KEY)
     # Create vectorstore
     memory, retriever = create_vectorstore(llm)
     # Create chat response generator
@@ -46,7 +49,7 @@ def create_vectorstore(llm):
 def ask(query):
     query += ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
     response = generator.invoke(query)
-    if "I'm sorry" in response['answer'] or "there is no information" in response['answer']:
+    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or response['answer'] == "I don't know":
         feed_vectorstore(query)
         response = generator.invoke(query)
 
@@ -78,8 +81,6 @@ def feed_vectorstore(query):
 
 
 def set_openai_key():
-    global OPENAI_API_KEY
-    OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
     try:
         global OPENAI_API_KEY
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
