@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_restful import Resource, Api
 import app as chat
 
@@ -11,7 +11,8 @@ class Users(Resource):
     def post(self):
         question = request.json['message']
         answer = chat.ask(question)
-        return jsonify(answer)
+        response = Response(answer,content_type="text/plain; charset=utf-8" )
+        return response
 
 
 api.add_resource(Users, '/')
