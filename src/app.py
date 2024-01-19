@@ -1,17 +1,16 @@
 import os
 import uuid
-
-from langchain.chains import ConversationalRetrievalChain
-from langchain.schema.document import Document
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import Chroma
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory.buffer import ConversationBufferMemory
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from api_request import k8s_request
 from openai import OpenAI
 
-from api_request import k8s_request
 
 ### To locally test the app ,uncomment this function and the last two lines of this file
 # def main():
