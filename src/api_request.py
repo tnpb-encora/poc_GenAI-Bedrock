@@ -30,6 +30,8 @@ class k8s_request():
         completion = self.get_api_completion()
         if completion[0] == "/":
             api_endpoint = f'{self.api_server_url}{completion}'
+        elif completion == "-1":
+            return completion
         else:
             api_endpoint = f'{self.api_server_url}/{completion}'
 
@@ -53,7 +55,9 @@ class k8s_request():
 
         # Get completion
         completion = chain.invoke({"input": self.query})
-        clean_completion = completion.split(":")[1].strip()
+        clean_completion = "-1"
+        if len(completion.split(":")) > 1:
+            clean_completion = completion.split(":")[1].strip()
 
         return clean_completion
 
@@ -67,6 +71,8 @@ class k8s_request():
     def get_API_response(self):
         # Define Kubernetes API endpoint
         api_endpoint = self.get_endpoint()
+        if api_endpoint == "-1":
+            return "No StarlingX/Kubernetes API capable of answering your question was found! Pleasy try again with another prompt."
 
         # Load Kubernetes certificates
         cert = (self.client_cert_path, self.client_key_path)

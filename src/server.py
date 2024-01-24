@@ -35,4 +35,4 @@ api.add_resource(Session, '/session')
 if __name__ == "__main__":
     chat.set_openai_key()
     chat.initiate_sessions()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=2000)

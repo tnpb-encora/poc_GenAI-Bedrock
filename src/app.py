@@ -1,13 +1,13 @@
 import os
 import uuid
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.schema.document import Document
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import Chroma
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory.buffer import ConversationBufferMemory
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from api_request import k8s_request
 from openai import OpenAI
 
@@ -62,7 +62,7 @@ def create_vectorstore(llm, session_id):
 def ask(query, session):
     query += ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
     response = session['generator'].invoke(query)
-    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or response['answer'] == "I don't know":
+    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or "I don't know" in response['answer']:
         feed_vectorstore(query, session)
         response = session['generator'].invoke(query)
 
