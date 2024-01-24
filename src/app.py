@@ -2,7 +2,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain.schema.document import Document
-from langchain.memory import ConversationSummaryMemory
+from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from api_request import k8s_request
@@ -39,7 +39,7 @@ def create_vectorstore(llm):
     docs = [Document(page_content=x) for x in data_start]
     vectorstore = Chroma.from_documents(documents=docs, embedding=OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY))
 
-    memory = ConversationSummaryMemory(
+    memory = ConversationBufferMemory(
     llm=llm, memory_key="chat_history", return_messages=True)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
 
@@ -69,7 +69,7 @@ def feed_vectorstore(query):
     docs = [Document(page_content=x) for x in all_splits]
     vectorstore = Chroma.from_documents(documents=docs, embedding=OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY))
 
-    memory = ConversationSummaryMemory(
+    memory = ConversationBufferMemory(
     llm=llm, memory_key="chat_history", return_messages=True)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
 
