@@ -1,0 +1,19 @@
+{
+    "APIs": [
+        {
+            "url": "18002/v1/alarms",
+            "method": "GET",
+            "action": "Lists all active alarms"
+        },
+        {
+            "url": "18002/v1/alarms/<uuid>",
+            "method": "GET",
+            "action": "Give specific information about the alarm with the given uuid"
+        },
+        {
+            "url": "6385/v1/clusters",
+            "method": "GET",
+            "action": "Lists all cluster entities"
+        }
+    ]
+}

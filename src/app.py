@@ -4,24 +4,16 @@ from langchain_community.vectorstores import Chroma
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-from api_request import k8s_request
+from api_request import k8s_request, stx_request
 from openai import OpenAI
 import os
-
-### To locally test the app ,uncomment this function and the last two lines of this file
-# def main():
-#     set_openai_key()
-    #     initiate_generator()
-#     query = input()
-#     ask(query)
 
 
 def initiate_generator():
     # Initiate LLM
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
-        temperature=0,
+        temperature=0.5,
         openai_api_key=OPENAI_API_KEY)
     # Create vectorstore
     memory, retriever = create_vectorstore(llm)
@@ -47,22 +39,19 @@ def create_vectorstore(llm):
 
 
 def ask(query):
-    query += ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
-    response = generator.invoke(query)
-    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or response['answer'] == "I don't know":
-        feed_vectorstore(query)
-        response = generator.invoke(query)
+    query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
 
-    print(response['answer'])
+    response = generator.invoke(query_completion)
+    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or "I don't know" in response['answer']:
+        feed_vectorstore(query)
+        response = generator.invoke(query_completion)
+
     return response['answer']
-    ## Uncommnet to test locally
-    # query = input().lower()
 
 
 def feed_vectorstore(query):
     llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY)
-    bot = k8s_request(query, OPENAI_API_KEY)
-    response = k8s_request.get_API_response(bot)
+    response = api_response(query)
 
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     all_splits = text_splitter.split_text(response)
@@ -103,5 +92,35 @@ def is_api_key_valid(key):
         return True
 
 
-# if __name__ == "__main__":
-#     main()
+def define_api_pool(query):
+    # Use LLM to decide if Kubernetes or StarlingX API pool should be used.
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+    prompt = f"Based on the following query you will choose between StarlingX APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Starlingx or a Kubernetes API. Make sure that your response only contains the name StarlingX or the name Kubernetes and nothing else.\n\nUser query: {query}"
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": "You are an AI connected to a StarlingX system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."}, {"role": "user", "content": prompt}]
+    )
+
+    print(f"###########{response.choices[0].message.content}")
+    if response.choices[0].message.content.lower() == "kubernetes":
+        return "Kubernetes"
+    elif response.choices[0].message.content.lower() == "starlingx":
+        return "StarlingX"
+    else:
+        raise ValueError('LLM could not define specific API pool.')
+
+
+def api_response(query):
+    pool = define_api_pool(query)
+    if pool == "Kubernetes":
+        bot = k8s_request(query, OPENAI_API_KEY)
+        response = k8s_request.get_API_response(bot)
+    elif pool == "StarlingX":
+        bot = stx_request(query, OPENAI_API_KEY)
+        response = stx_request.get_API_response(bot)
+    else:
+        raise ValueError('Error while trying to get API response.')
+
+    return response
