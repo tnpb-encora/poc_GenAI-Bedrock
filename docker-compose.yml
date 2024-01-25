@@ -5,15 +5,11 @@ services:
     container_name: stx-chatbot-be
     hostname: stx-chatbot-be
     restart: unless-stopped
+    network_mode: host
     volumes:
       - /etc/kubernetes/pki/apiserver-kubelet-client.crt:/app/certs/apiserver-kubelet-client.crt
       - /etc/kubernetes/pki/apiserver-kubelet-client.key:/app/certs/apiserver-kubelet-client.key
       - /etc/kubernetes/pki/ca.crt:/app/certs/ca.crt
     environment:
-      OPENAI_API_KEY: /run/secrets/openai_api_key
-    ports:
-      - 2000:2000
-
-secrets:
-  openai_api_key:
-    file: openai_key.txt
+      OPENAI_API_KEY: ${openai_key}
+      OAM_IP: ${oam_ip}
