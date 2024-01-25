@@ -95,8 +95,8 @@ class stx_request():
 
         # Necessary API address
             # Get OAM IP
-        #OAM_IP = os.environ['OAM_IP']
-        self.api_server_url = f"http://localhost:"
+        OAM_IP = os.environ['OAM_IP']
+        self.api_server_url = f"http://OAM_IP:"
 
         # User query
         self.query = user_query
