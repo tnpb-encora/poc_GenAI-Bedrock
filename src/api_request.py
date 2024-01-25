@@ -46,7 +46,7 @@ class k8s_request():
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", f"You are an API generator, based on the user input you will sugest the best API endpoint to retrieve the information from a kubernetes cluster.\n\nYou will only provide the API information that comes after the IP:PORT.\n\nMake sure the providade endpoint is a valid one.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
+        ("system", f"You are an API generator, based on the user input you will suggest the best API endpoint to retrieve the information from a kubernetes cluster.\n\nYou will only provide the API information that comes after the IP:PORT.\n\nMake sure the provided endpoint is a valid one.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
         ("user", "{input}")
         ])
 
@@ -91,7 +91,111 @@ class k8s_request():
 
 
 class stx_request():
-    pass
+
+    def __init__(self, user_query, key):
+        # Necessary token
+        self.token = self.get_token()
+
+        # API key
+        self.api_key = key
+
+        # Necessary API address
+            # Get OAM IP
+        self.api_server_url = f"http://{os.environ['OAM_IP']}:"
+
+        # User query
+        self.query = user_query
+
+        # Embedded list of StarlingX APIs
+        self.apis = self.load_embedded_apis()
+
+
+    def load_embedded_apis(self):
+        with open ("Stx_apis.json", "r") as f:
+            api_list = f.read()
+
+        return api_list
+
+
+    def get_endpoint(self):
+        completion = self.get_api_completion()
+        api = self.api_server_url + completion
+        print(api)
+
+        return api
+
+
+    def get_api_completion(self):
+        # Initiate OpenAI
+        llm = ChatOpenAI(openai_api_key = self.api_key,
+                         temperature=0.4)
+
+        # Expected llm response format
+        format_response = "api: <api_url>"
+
+        # Create prompt
+        prompt = ChatPromptTemplate.from_messages([
+        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a StarlingX cluster.\n\nYou will look in the context for the available APIs in a StarlingX cluster.\\n\nMake sure the provided endpoint is present on the provided context.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
+        ("user", "Context:{context} \n\n\n Question:{question}")
+        ])
+
+        output_parser = StrOutputParser()
+        chain = prompt | llm | output_parser
+
+        #Get completion
+        completion = chain.invoke({"context":self.apis, "question": self.query})
+        #completion = response.choices[0].message.content
+        clean_completion = completion.split(":")[1].strip()
+
+        return clean_completion
+
+
+    def get_API_response(self):
+        url = self.get_endpoint()
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Auth-Token": self.token
+        }
+
+        response = requests.get(url, headers=headers)
+        str_response = f"StarlingX API response = {response.text}"
+
+        return str_response
+
+
+    def get_token(self):
+        url = "http://localhost:5000/v3/auth/tokens"
+        headers = {
+            "Content-Type": "application/json"
+        }
+        data = {
+            "auth": {
+                "identity": {
+                    "methods": ["password"],
+                    "password": {
+                        "user": {
+                            "name": "admin",
+                            "domain": {"id": "default"},
+                            "password": "Li69nux*"
+                        }
+                    }
+                },
+                "scope": {
+                    "project": {
+                        "name": "admin",
+                        "domain": {"id": "default"}
+                    }
+                }
+            }
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+
+        # Get token from response
+        x_auth_token = response.headers["x-subject-token"]
+
+        return x_auth_token
 
 
 class openstack_request():
