@@ -1,6 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
+from constants import CLIENT_ERROR_MSG
 import requests
 import os
 
@@ -73,7 +74,7 @@ class k8s_request():
         # Define Kubernetes API endpoint
         api_endpoint = self.get_endpoint()
         if api_endpoint == "-1":
-            return "No StarlingX/Kubernetes API capable of answering your question was found! Pleasy try again with another prompt."
+            return CLIENT_ERROR_MSG
 
         # Load Kubernetes certificates
         cert = (self.client_cert_path, self.client_key_path)

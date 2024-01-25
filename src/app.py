@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
@@ -8,6 +9,7 @@ from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from api_request import k8s_request, stx_request
 from openai import OpenAI
+from constants import CLIENT_ERROR_MSG
 
 
 def initiate_sessions():
@@ -35,7 +37,7 @@ def new_session(model, temperature):
     return sessions[session_id]
 
 
-def create_vectorstore(llm, session_id):
+def create_vectorstore(llm):
     # Create Chroma vector store
     data_start = "start vectorstore"
     docs = [Document(page_content=x) for x in data_start]
@@ -59,7 +61,11 @@ def ask(query, session):
 
 
 def feed_vectorstore(query, session):
-    response = api_response(query)
+    response = api_response(query, session)
+    
+    regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
+    if re.search(regex, response):
+        response = CLIENT_ERROR_MSG
 
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     all_splits = text_splitter.split_text(response)
@@ -101,14 +107,14 @@ def is_api_key_valid(key):
         return True
 
 
-def define_api_pool(query):
+def define_api_pool(query, session):
     # Use LLM to decide if Kubernetes or StarlingX API pool should be used.
     client = OpenAI(api_key=OPENAI_API_KEY)
 
     prompt = f"Based on the following query you will choose between StarlingX APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Starlingx or a Kubernetes API. Make sure that your response only contains the name StarlingX or the name Kubernetes and nothing else.\n\nUser query: {query}"
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model=session["llm"].model,
         messages=[{"role": "system", "content": "You are an AI connected to a StarlingX system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."}, {"role": "user", "content": prompt}]
     )
 
@@ -118,11 +124,11 @@ def define_api_pool(query):
     elif response.choices[0].message.content.lower() == "starlingx":
         return "StarlingX"
     else:
-        raise ValueError('LLM could not define specific API pool.')
+        return "Undefined"
 
 
-def api_response(query):
-    pool = define_api_pool(query)
+def api_response(query, session):
+    pool = define_api_pool(query, session)
     if pool == "Kubernetes":
         bot = k8s_request(query, OPENAI_API_KEY)
         response = k8s_request.get_API_response(bot)
@@ -130,6 +136,6 @@ def api_response(query):
         bot = stx_request(query, OPENAI_API_KEY)
         response = stx_request.get_API_response(bot)
     else:
-        raise ValueError('Error while trying to get API response.')
+        response = CLIENT_ERROR_MSG
 
     return response
