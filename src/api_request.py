@@ -55,9 +55,10 @@ class k8s_request():
 
         # Get completion
         completion = chain.invoke({"input": self.query})
-        clean_completion = "-1"
         if len(completion.split(":")) > 1:
             clean_completion = completion.split(":")[1].strip()
+        else:
+            clean_completion = "-1"
 
         return clean_completion
 

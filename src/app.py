@@ -1,13 +1,11 @@
 import os
 import uuid
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.schema.document import Document
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import Chroma
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain.memory.buffer import ConversationBufferMemory
 from api_request import k8s_request, stx_request
 from openai import OpenAI
 
@@ -43,8 +41,6 @@ def create_vectorstore(llm, session_id):
     docs = [Document(page_content=x) for x in data_start]
     vectorstore = Chroma.from_documents(documents=docs, embedding=OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY))
 
-    memory = ConversationBufferMemory(
-    llm=llm, memory_key="chat_history", return_messages=True)
     memory = ConversationBufferMemory(
     llm=llm, memory_key="chat_history", return_messages=True)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
