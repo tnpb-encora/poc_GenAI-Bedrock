@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import uuid
@@ -34,6 +35,11 @@ def new_session(model, temperature):
                 llm=llm,
                 retriever=retriever,
                 memory=memory)
+
+    # Give the LLM date time context
+    query = f"From now on you will use {datetime.datetime.now()} as current datetime for any datetime related user query"
+    generator.invoke(query)
+
     # Add session to sessions map
     sessions[session_id] = {"generator": generator, "llm": llm, "id": session_id}
     return sessions[session_id]
