@@ -1,6 +1,7 @@
 import datetime
 import os
 import re
+import sys
 import uuid
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
@@ -61,9 +62,22 @@ def create_vectorstore(llm):
 def ask(query, session):
     query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
     response = session['generator'].invoke(query_completion)
-    if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or "I don't know" in response['answer']:
+
+    print(f'######{response}', file=sys.stderr)
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    prompt_status = client.chat.completions.create(model='gpt-4',
+                                                   messages=[{"role": "system",
+                                                              "content": "Your role is to analyze the context of a text. You should check whether the text indicates that there is information about a subject or not. If the text contains expressions like 'no context', or 'no information', or 'i don't know', perhaps it is saying that there is not enough information, therefore the context is negative."},
+                                                             {"role": "user",
+                                                              "content": f"Based on the following text, check if the general context indicates that there is information about what is being asked or not. Make sure to answer only the words 'positive' if there is information, or 'negative' if there isn't. Don't answer nothing besides it: {response['answer']}"}])
+    print(f'prompt status: {prompt_status.choices[0].message.content}', file=sys.stderr)
+    if 'negative' in prompt_status.choices[0].message.content.lower():
         feed_vectorstore(query, session)
         response = session['generator'].invoke(query_completion)
+
+    # if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or "I don't know" in response['answer']:
+    #     feed_vectorstore(query, session)
+    #     response = session['generator'].invoke(query_completion)
 
     return response['answer']
 
