@@ -72,7 +72,7 @@ def feed_vectorstore(query, session):
     response = api_response(query, session)
 
     regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
-    if re.search(regex, response):
+    if re.search(regex, response.lower()):
         response = CLIENT_ERROR_MSG
 
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
@@ -97,22 +97,22 @@ def set_openai_key():
         global OPENAI_API_KEY
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
         is_api_key_valid(OPENAI_API_KEY)
-    except:
+    except Exception:
         raise Exception("Error while trying to set OpenAI API Key variable")
+    return True
 
 
 def is_api_key_valid(key):
     try:
         client = OpenAI(api_key=key)
-        response = client.chat.completions.create(
+        _ = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": "This is a test."}],
             max_tokens=5
         )
-    except:
+    except Exception:
         raise Exception("The provided key is not valid.")
-    else:
-        return True
+    return True
 
 
 def define_api_pool(query, session):

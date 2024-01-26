@@ -1,4 +1,4 @@
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, request
 from flask_restful import Api, Resource
 
 import app as chat
