@@ -16,7 +16,7 @@ def initiate_sessions():
     global sessions
     sessions = {}
 
-def get_session(session_id): 
+def get_session(session_id):
     return sessions.get(session_id)
 
 def new_session(model, temperature):
@@ -26,7 +26,7 @@ def new_session(model, temperature):
         temperature=float(temperature),
         openai_api_key=OPENAI_API_KEY)
     session_id = str(uuid.uuid4())
-    memory, retriever = create_vectorstore(llm, session_id)
+    memory, retriever = create_vectorstore(llm)
     # Create chat response generator
     generator = ConversationalRetrievalChain.from_llm(
                 llm=llm,
@@ -62,7 +62,7 @@ def ask(query, session):
 
 def feed_vectorstore(query, session):
     response = api_response(query, session)
-    
+
     regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
     if re.search(regex, response):
         response = CLIENT_ERROR_MSG
