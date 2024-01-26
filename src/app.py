@@ -4,6 +4,8 @@ import uuid
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -16,7 +18,7 @@ def initiate_sessions():
     global sessions
     sessions = {}
 
-def get_session(session_id): 
+def get_session(session_id):
     return sessions.get(session_id)
 
 def new_session(model, temperature):
@@ -62,7 +64,7 @@ def ask(query, session):
 
 def feed_vectorstore(query, session):
     response = api_response(query, session)
-    
+
     regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
     if re.search(regex, response):
         response = CLIENT_ERROR_MSG
@@ -109,19 +111,21 @@ def is_api_key_valid(key):
 
 def define_api_pool(query, session):
     # Use LLM to decide if Kubernetes or StarlingX API pool should be used.
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    complete_query = f"Based on the following query you will choose between StarlingX APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Starlingx or a Kubernetes API. Make sure that your response only contains the name StarlingX or the name Kubernetes and nothing else.\n\nUser query: {query}"
 
-    prompt = f"Based on the following query you will choose between StarlingX APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Starlingx or a Kubernetes API. Make sure that your response only contains the name StarlingX or the name Kubernetes and nothing else.\n\nUser query: {query}"
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are an AI connected to a StarlingX system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."),
+        ("user", "{input}")
+    ])
 
-    response = client.chat.completions.create(
-        model=session["llm"].model,
-        messages=[{"role": "system", "content": "You are an AI connected to a StarlingX system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."}, {"role": "user", "content": prompt}]
-    )
+    output_parser = StrOutputParser()
+    chain = prompt | session["llm"] | output_parser
+    response = chain.invoke({"input": complete_query})
 
-    print(f"###########{response.choices[0].message.content}")
-    if response.choices[0].message.content.lower() == "kubernetes":
+    print(f"###########{response}")
+    if response.lower() == "kubernetes":
         return "Kubernetes"
-    elif response.choices[0].message.content.lower() == "starlingx":
+    elif response.lower() == "starlingx":
         return "StarlingX"
     else:
         return "Undefined"
