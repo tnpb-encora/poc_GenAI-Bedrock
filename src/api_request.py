@@ -95,6 +95,11 @@ class k8s_request():
 class stx_request():
 
     def __init__(self, user_query, key):
+        # Load env variables    
+        self.oam_ip = os.environ['OAM_IP']
+        self.user = os.environ['STX_USER']
+        self.password = os.environ['STX_PASSWORD']
+
         # Necessary token
         self.token = self.get_token()
 
@@ -102,8 +107,7 @@ class stx_request():
         self.api_key = key
 
         # Necessary API address
-            # Get OAM IP
-        self.api_server_url = f"http://{os.environ['OAM_IP']}:"
+        self.api_server_url = f"http://{self.oam_ip}:"
 
         # User query
         self.query = user_query
@@ -146,6 +150,7 @@ class stx_request():
 
         #Get completion
         completion = chain.invoke({"context":self.apis, "question": self.query})
+
         #completion = response.choices[0].message.content
         clean_completion = completion.split(":")[1].strip()
 
@@ -167,7 +172,7 @@ class stx_request():
 
 
     def get_token(self):
-        url = "http://localhost:5000/v3/auth/tokens"
+        url = f"http://{self.oam_ip}:5000/v3/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
@@ -177,9 +182,9 @@ class stx_request():
                     "methods": ["password"],
                     "password": {
                         "user": {
-                            "name": "admin",
+                            "name": self.user,
                             "domain": {"id": "default"},
-                            "password": "Li69nux*"
+                            "password": self.password
                         }
                     }
                 },

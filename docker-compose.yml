@@ -13,3 +13,5 @@ services:
     environment:
       OPENAI_API_KEY: ${openai_key}
       OAM_IP: ${oam_ip}
+      STX_USER: ${user}
+      STX_PASSWORD: ${password}

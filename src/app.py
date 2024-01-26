@@ -28,7 +28,7 @@ def new_session(model, temperature):
         temperature=float(temperature),
         openai_api_key=OPENAI_API_KEY)
     session_id = str(uuid.uuid4())
-    memory, retriever = create_vectorstore(llm, session_id)
+    memory, retriever = create_vectorstore(llm)
     # Create chat response generator
     generator = ConversationalRetrievalChain.from_llm(
                 llm=llm,
