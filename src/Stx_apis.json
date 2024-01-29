@@ -8,17 +8,22 @@
         {
             "url": "18002/v1/alarms/<uuid>",
             "method": "GET",
-            "action": "Give specific information about the alarm with the given uuid"
-        },
-        {
-            "url": "6385/v1/clusters",
-            "method": "GET",
-            "action": "Lists all cluster entities"
+            "action": "Give additional information about the alarm with the given uuid"
         },
         {
             "url": "6385/v1/certificate",
             "method": "GET",
             "action": "Lists all installed System Certificates"
+        },
+        {
+            "url": "8119/v1.0/subclouds",
+            "method": "GET",
+            "action": "Lists all subclouds"
+        },
+        {
+            "url": "8119/v1.0/alarms",
+            "method": "GET",
+            "action": "Summarizes alarms from all subclouds"
         }
     ]
 }

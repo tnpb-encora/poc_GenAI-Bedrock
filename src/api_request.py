@@ -95,7 +95,7 @@ class k8s_request():
 class stx_request():
 
     def __init__(self, user_query, key):
-        # Load env variables    
+        # Load env variables
         self.oam_ip = os.environ['OAM_IP']
         self.user = os.environ['STX_USER']
         self.password = os.environ['STX_PASSWORD']
@@ -141,7 +141,7 @@ class stx_request():
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a StarlingX cluster.\n\nYou will look in the context for the available APIs in a StarlingX cluster.\\n\nMake sure the provided endpoint is present on the provided context.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
+        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a StarlingX cluster.\n\nYou will look in the context for the available APIs in a StarlingX cluster.\n\nMake sure the provided endpoint is present on the provided context and check the action of the APIs to provide the ideal url for the user question.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
         ("user", "Context:{context} \n\n\n Question:{question}")
         ])
 
