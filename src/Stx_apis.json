@@ -11,6 +11,11 @@
             "action": "Give additional information about the alarm with the given uuid"
         },
         {
+            "url": "6385/v1/ihosts",
+            "method": "GET",
+            "action": "Lists all host entities"
+        },
+        {
             "url": "6385/v1/certificate",
             "method": "GET",
             "action": "Lists all installed System Certificates"
