@@ -1,3 +1,5 @@
+import sys
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
@@ -81,6 +83,7 @@ class k8s_request():
         verify = self.ca_cert_path
 
         # API request
+        print(f'API address: {api_endpoint}', file=sys.stderr)
         response = requests.get(api_endpoint, cert=cert, verify=verify)
 
         if response.status_code == 200:
@@ -165,6 +168,7 @@ class stx_request():
             "X-Auth-Token": self.token
         }
 
+        print(f'API address: {url}', file=sys.stderr)
         response = requests.get(url, headers=headers)
         str_response = f"StarlingX API response = {response.text}"
 
