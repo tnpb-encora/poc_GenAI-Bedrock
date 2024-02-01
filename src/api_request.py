@@ -64,11 +64,14 @@ class k8s_request():
         return clean_completion
 
     def filter_response(self, response):
-        pods = response.json().get('items', [])
-        filtered_pods = [
-            pod for pod in pods if pod['metadata']['namespace'] not in self.excluded_namespaces]
+        try:
+            pods = response.json().get('items', [])
+            filtered_pods = [
+                pod for pod in pods if pod['metadata']['namespace'] not in self.excluded_namespaces]
 
-        return filtered_pods
+            return filtered_pods
+        except:
+            return response.json()
 
     def get_API_response(self):
         # Define Kubernetes API endpoint
