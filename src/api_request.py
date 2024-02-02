@@ -87,7 +87,7 @@ class k8s_request():
             print(f'API address: {api_endpoint}', file=sys.stderr)
             response = requests.get(api_endpoint, cert=cert, verify=verify)
         except:
-            return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
+            return "An error ocurred while trying to retrieve the information, please rewrite the question and try again."
 
         if response.status_code == 200:
             # Filter response for undesired namespaces
@@ -176,7 +176,7 @@ class stx_request():
             print(f'API address: {url}', file=sys.stderr)
             response = requests.get(url, headers=headers)
         except:
-            return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
+            return "An error ocurred while trying to retrieve the information, please rewrite the question and try again."
 
         if response.status_code == 200:
             str_response = f"StarlingX API response = {response.text}"
@@ -217,7 +217,7 @@ class stx_request():
         except:
             return "An error ocurred while trying to retrieve the authentication for the StarlingX APIs."
 
-        if response.status_code == 200:
+        if response.status_code == 201:
             # Get token from response
             x_auth_token = response.headers["x-subject-token"]
 
