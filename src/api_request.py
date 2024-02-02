@@ -64,7 +64,7 @@ class k8s_request():
         return clean_completion
 
     def filter_response(self, response):
-        if response.json().get('items', []) == []:
+        if response.json().get('items', []) != []:
             pods = response.json().get('items', [])
             try:
                 filtered_pods = [
