@@ -85,6 +85,11 @@ def ask(query, session):
 def feed_vectorstore(query, session):
     response = api_response(query, session)
 
+    if response is None:
+        raise Exception('API response is null')
+
+    print(f'API response: {response}', file=sys.stderr)
+
     regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
     if re.search(regex, response.lower()):
         response = CLIENT_ERROR_MSG
@@ -152,7 +157,9 @@ def define_api_pool(query, session):
 
 
 def api_response(query, session):
+    print('Defining API pool', file=sys.stderr)
     pool = define_api_pool(query, session)
+    print(f'LLM defined {pool} as the API subject', file=sys.stderr)
     if pool == "Kubernetes":
         bot = k8s_request(query, OPENAI_API_KEY)
         response = k8s_request.get_API_response(bot)

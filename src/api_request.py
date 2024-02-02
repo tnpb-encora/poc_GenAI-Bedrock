@@ -1,3 +1,5 @@
+import sys
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
@@ -82,6 +84,7 @@ class k8s_request():
 
         # API request
         try:
+            print(f'API address: {api_endpoint}', file=sys.stderr)
             response = requests.get(api_endpoint, cert=cert, verify=verify)
         except:
             return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
@@ -168,13 +171,14 @@ class stx_request():
             "X-Auth-Token": self.token
         }
 
+
         try:
+            print(f'API address: {url}', file=sys.stderr)
             response = requests.get(url, headers=headers)
         except:
             return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
 
         if response.status_code == 200:
-            # Filter response for undesired namespaces
             str_response = f"StarlingX API response = {response.text}"
             return str_response
         else:
