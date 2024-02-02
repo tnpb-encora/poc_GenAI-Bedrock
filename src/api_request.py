@@ -66,9 +66,12 @@ class k8s_request():
     def filter_response(self, response):
         if response.json().get('items', []) == []:
             pods = response.json().get('items', [])
-            filtered_pods = [
-                pod for pod in pods if pod['metadata']['namespace'] not in self.excluded_namespaces]
-            return filtered_pods
+            try:
+                filtered_pods = [
+                    pod for pod in pods if pod['metadata']['namespace'] not in self.excluded_namespaces]
+                return filtered_pods
+            except:
+                return response.json()
         else:
             return response.json()
 
