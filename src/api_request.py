@@ -83,8 +83,11 @@ class k8s_request():
         verify = self.ca_cert_path
 
         # API request
-        print(f'API address: {api_endpoint}', file=sys.stderr)
-        response = requests.get(api_endpoint, cert=cert, verify=verify)
+        try:
+            print(f'API address: {api_endpoint}', file=sys.stderr)
+            response = requests.get(api_endpoint, cert=cert, verify=verify)
+        except:
+            return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
 
         if response.status_code == 200:
             # Filter response for undesired namespaces
@@ -92,7 +95,7 @@ class k8s_request():
             buit_text_response = f"API {api_endpoint} response = {filtered_response}"
             return buit_text_response
         else:
-            print(f"Error trying to make API request:\n {response.status_code}, {response.text}")
+            return f"Error trying to make API request:\n {response.status_code}, {response.text}"
 
 
 class stx_request():
@@ -168,11 +171,19 @@ class stx_request():
             "X-Auth-Token": self.token
         }
 
-        print(f'API address: {url}', file=sys.stderr)
-        response = requests.get(url, headers=headers)
-        str_response = f"StarlingX API response = {response.text}"
 
-        return str_response
+        try:
+            print(f'API address: {url}', file=sys.stderr)
+            response = requests.get(url, headers=headers)
+        except:
+            return "An error ocurred while trying to retrieve the information, plase rewrite the question and try again."
+
+        if response.status_code == 200:
+            str_response = f"StarlingX API response = {response.text}"
+            return str_response
+        else:
+            return f"Error trying to make API request:\n {response.status_code}, {response.text}"
+
 
 
     def get_token(self):
@@ -201,12 +212,20 @@ class stx_request():
             }
         }
 
-        response = requests.post(url, headers=headers, json=data)
+        try:
+            response = requests.post(url, headers=headers, json=data)
+        except:
+            return "An error ocurred while trying to retrieve the authentication for the StarlingX APIs."
 
-        # Get token from response
-        x_auth_token = response.headers["x-subject-token"]
+        if response.status_code == 200:
+            # Get token from response
+            x_auth_token = response.headers["x-subject-token"]
 
-        return x_auth_token
+            return x_auth_token
+        else:
+            return f"Error trying to retrieve authentication token:\n {response.status_code}, {response.text}"
+
+
 
 
 class openstack_request():
