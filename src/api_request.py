@@ -38,6 +38,10 @@ class k8s_request():
         else:
             api_endpoint = f'{self.api_server_url}/{completion}'
 
+        # Guarantee that chatbot don't use alucinated API for k8s version
+        if "version" in api_endpoint:
+            api_endpoint = "https://192.168.206.1:6443/version"
+
         return api_endpoint
 
     def get_api_completion(self):
