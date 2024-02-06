@@ -3,7 +3,7 @@ import sys
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
-from constants import CLIENT_ERROR_MSG
+from constants import CLIENT_ERROR_MSG, LOG
 import requests
 import os
 
@@ -94,9 +94,12 @@ class k8s_request():
         # API request
         try:
             print(f'API address: {api_endpoint}', file=sys.stderr)
+            LOG.info(f'API address: {api_endpoint}')
             response = requests.get(api_endpoint, cert=cert, verify=verify)
-        except:
-            return "An error ocurred while trying to retrieve the information, please rewrite the question and try again."
+        except Exception as e:
+            error = f"An error ocurred while trying to retrieve the information, please rewrite the question and try again.\n Error: {e}"
+            LOG.warning(error)
+            return error
 
         if response.status_code == 200:
             # Filter response for undesired namespaces
@@ -104,7 +107,9 @@ class k8s_request():
             buit_text_response = f"API {api_endpoint} response = {filtered_response}"
             return buit_text_response
         else:
-            return f"Error trying to make API request:\n {response.status_code}, {response.text}"
+            error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
+            LOG.warning(error)
+            return error
 
 
 class stx_request():
@@ -141,7 +146,6 @@ class stx_request():
     def get_endpoint(self):
         completion = self.get_api_completion()
         api = self.api_server_url + completion
-        print(api)
 
         return api
 
@@ -183,15 +187,20 @@ class stx_request():
 
         try:
             print(f'API address: {url}', file=sys.stderr)
+            LOG.info(f'API address: {url}')
             response = requests.get(url, headers=headers)
-        except:
-            return "An error ocurred while trying to retrieve the information, please rewrite the question and try again."
+        except Exception as e:
+            error = f"An error ocurred while trying to retrieve the information, please rewrite the question and try again.\n Error: {e}"
+            LOG.warning(error)
+            return error
 
         if response.status_code == 200:
             str_response = f"StarlingX API response = {response.text}"
             return str_response
         else:
-            return f"Error trying to make API request:\n {response.status_code}, {response.text}"
+            error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
+            LOG.warning(error)
+            return error
 
 
 
@@ -232,7 +241,9 @@ class stx_request():
 
             return x_auth_token
         else:
-            return f"Error trying to retrieve authentication token:\n {response.status_code}, {response.text}"
+            error = f"Error trying to retrieve authentication token:\n {response.status_code}, {response.text}"
+            LOG.warning(error)
+            return error
 
 
 

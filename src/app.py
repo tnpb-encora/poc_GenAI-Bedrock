@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import re
 import sys
@@ -13,15 +14,17 @@ from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from api_request import k8s_request, stx_request
 from openai import OpenAI
-from constants import CLIENT_ERROR_MSG
+from constants import CLIENT_ERROR_MSG, LOG
 
 
 def initiate_sessions():
     global sessions
     sessions = {}
 
+
 def get_session(session_id):
     return sessions.get(session_id)
+
 
 def new_session(model, temperature):
     # Create vectorstore
@@ -43,7 +46,25 @@ def new_session(model, temperature):
 
     # Add session to sessions map
     sessions[session_id] = {"generator": generator, "llm": llm, "id": session_id}
+    LOG.info(f"New session with ID: {session_id} initiated. Model: {model}, Temperature: {temperature}")
     return sessions[session_id]
+
+
+def create_logger():
+    # Create logger
+    LOG = logging.getLogger("chatbot")
+    LOG.setLevel(logging.INFO)
+
+    # Create a file handler and set its level to INFO
+    file_handler = logging.FileHandler('chatbot.log')
+    file_handler.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    # Add the file handler to the logger
+    LOG.addHandler(file_handler)
+    LOG.info("Chatbot logger initiated.")
 
 
 def create_vectorstore(llm):
@@ -61,6 +82,7 @@ def create_vectorstore(llm):
 
 def ask(query, session):
     query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
+    LOG.info(f"User query: {query}")
     response = session['generator'].invoke(query_completion)
 
     print(f'######{response}', file=sys.stderr)
@@ -72,13 +94,14 @@ def ask(query, session):
                                                               "content": f"Based on the following text, check if the general context indicates that there is information about what is being asked or not. Make sure to answer only the words 'positive' if there is information, or 'negative' if there isn't. Don't answer nothing besides it: {response['answer']}"}])
     print(f'prompt status: {prompt_status.choices[0].message.content}', file=sys.stderr)
     if 'negative' in prompt_status.choices[0].message.content.lower():
+        LOG.info("Negative response from LLM")
         feed_vectorstore(query, session)
         response = session['generator'].invoke(query_completion)
 
     # if "I'm sorry" in response['answer'] or "there is no information" in response['answer'] or "I don't know" in response['answer']:
     #     feed_vectorstore(query, session)
     #     response = session['generator'].invoke(query_completion)
-
+    LOG.info(f"Chatbot response: {response['answer']}")
     return response['answer']
 
 
@@ -112,12 +135,14 @@ def feed_vectorstore(query, session):
 
 
 def set_openai_key():
+    create_logger()
     try:
         global OPENAI_API_KEY
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
         is_api_key_valid(OPENAI_API_KEY)
     except Exception:
         raise Exception("Error while trying to set OpenAI API Key variable")
+    LOG.info("API key configured")
     return True
 
 
@@ -158,8 +183,10 @@ def define_api_pool(query, session):
 
 def api_response(query, session):
     print('Defining API pool', file=sys.stderr)
+    LOG.info('Defining API pool')
     pool = define_api_pool(query, session)
     print(f'LLM defined {pool} as the API subject', file=sys.stderr)
+    LOG.info(f'LLM defined {pool} as the API subject')
     if pool == "Kubernetes":
         bot = k8s_request(query, OPENAI_API_KEY)
         response = k8s_request.get_API_response(bot)
