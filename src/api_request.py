@@ -10,11 +10,15 @@ import os
 class k8s_request():
 
     # def __init__(self):
-    def __init__(self, user_query, key):
-        # Necessary certificates
-        self.ca_cert_path = os.path.abspath("/app/certs/ca.crt")
-        self.client_cert_path = os.path.abspath("/app/certs/apiserver-kubelet-client.crt")
-        self.client_key_path = os.path.abspath("/app/certs/apiserver-kubelet-client.key")
+    def __init__(self, user_query, key, instance):
+        # Get IP
+        self.oam_ip = instance['URL']
+
+        # Get name
+        self.name = instance['name']
+
+        # Get Kubernetes TOKEN
+        self.k8s_token = instance['token']
 
         # Namespaces to be ignored
         self.excluded_namespaces = ["armada", "cert-manager", "flux-helm", "kube-system"]
@@ -23,7 +27,7 @@ class k8s_request():
         self.api_key = key
 
         # Necessary API address
-        self.api_server_url = "https://192.168.206.1:6443"
+        self.api_server_url = f"https://{self.oam_ip}:6443"
 
         # User query
         self.query = user_query
@@ -40,7 +44,7 @@ class k8s_request():
 
         # Guarantee that chatbot don't use alucinated API for k8s version
         if "version" in api_endpoint:
-            api_endpoint = "https://192.168.206.1:6443/version"
+            api_endpoint = f"https://{self.oam_ip}:6443/version"
 
         return api_endpoint
 
@@ -87,15 +91,14 @@ class k8s_request():
         if api_endpoint == "-1":
             return CLIENT_ERROR_MSG
 
-        # Load Kubernetes certificates
-        cert = (self.client_cert_path, self.client_key_path)
-        verify = self.ca_cert_path
+        # Define headers with Authorization
+        headers = {'Authorization': f'Bearer {self.k8s_token}'}
 
         # API request
         try:
             print(f'API address: {api_endpoint}', file=sys.stderr)
             LOG.info(f'API address: {api_endpoint}')
-            response = requests.get(api_endpoint, cert=cert, verify=verify)
+            response = requests.get(api_endpoint, headers=headers, verify=False)
         except Exception as e:
             error = f"An error ocurred while trying to retrieve the information, please rewrite the question and try again.\n Error: {e}"
             LOG.warning(error)
@@ -104,7 +107,7 @@ class k8s_request():
         if response.status_code == 200:
             # Filter response for undesired namespaces
             filtered_response = self.filter_response(response)
-            buit_text_response = f"API {api_endpoint} response = {filtered_response}"
+            buit_text_response = f"API {api_endpoint} response from {self.name} = {filtered_response}"
             return buit_text_response
         else:
             error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
@@ -114,11 +117,12 @@ class k8s_request():
 
 class stx_request():
 
-    def __init__(self, user_query, key):
+    def __init__(self, user_query, key, instance):
         # Load env variables
-        self.oam_ip = os.environ['OAM_IP']
+        self.oam_ip = instance['URL']
         self.user = os.environ['STX_USER']
         self.password = os.environ['STX_PASSWORD']
+        self.name = instance['name']
 
         # Necessary token
         self.token = self.get_token()
@@ -195,7 +199,7 @@ class stx_request():
             return error
 
         if response.status_code == 200:
-            str_response = f"StarlingX API response = {response.text}"
+            str_response = f"StarlingX API response from {self.name} = {response.text}"
             return str_response
         else:
             error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
