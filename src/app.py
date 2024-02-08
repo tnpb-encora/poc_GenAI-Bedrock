@@ -212,7 +212,6 @@ def define_system(query):
 
     # Get list of all instances
     instance_list = node_list
-    print(f"\n\n\n{instance_list}\n\n")
 
     # Expected llm response format
     format_response = "name: <name>,URL: <URL>,type: <type>,token: <token>"
@@ -228,7 +227,6 @@ def define_system(query):
 
     #Get completion
     completion = chain.invoke({"context":instance_list, "question": query})
-    print(f"#######{completion}")
 
     pairs = completion.split(',')
     node_dict = {}
