@@ -5,16 +5,24 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from constants import CLIENT_ERROR_MSG, LOG
 import requests
+import re
 import os
 
 class k8s_request():
 
     # def __init__(self):
-    def __init__(self, user_query, key):
-        # Necessary certificates
-        self.ca_cert_path = os.path.abspath("/app/certs/ca.crt")
-        self.client_cert_path = os.path.abspath("/app/certs/apiserver-kubelet-client.crt")
-        self.client_key_path = os.path.abspath("/app/certs/apiserver-kubelet-client.key")
+    def __init__(self, user_query, key, instance):
+        # Get IP
+        ip = instance['URL']
+        pattern = r"(https?)://(?:\d{1,3}\.){3}\d{1,3}:"
+        match = re.search(pattern, ip)
+        self.oam_ip = match.group(0)
+
+        # Get name
+        self.name = instance['name']
+
+        # Get Kubernetes TOKEN
+        self.k8s_token = instance['token']
 
         # Namespaces to be ignored
         self.excluded_namespaces = ["armada", "cert-manager", "flux-helm", "kube-system"]
@@ -23,7 +31,11 @@ class k8s_request():
         self.api_key = key
 
         # Necessary API address
-        self.api_server_url = "https://192.168.206.1:6443"
+        if "https" in self.oam_ip:
+            self.api_server_url = f"{self.oam_ip}:6443"
+        else:
+            secure_oam = self.oam_ip.replace("http://", "https://")
+            self.api_server_url = f"{secure_oam}6443"
 
         # User query
         self.query = user_query
@@ -40,7 +52,7 @@ class k8s_request():
 
         # Guarantee that chatbot don't use alucinated API for k8s version
         if "version" in api_endpoint:
-            api_endpoint = "https://192.168.206.1:6443/version"
+            api_endpoint = f"{self.api_server_url}/version"
 
         return api_endpoint
 
@@ -87,15 +99,14 @@ class k8s_request():
         if api_endpoint == "-1":
             return CLIENT_ERROR_MSG
 
-        # Load Kubernetes certificates
-        cert = (self.client_cert_path, self.client_key_path)
-        verify = self.ca_cert_path
+        # Define headers with Authorization
+        headers = {'Authorization': f'Bearer {self.k8s_token}'}
 
         # API request
         try:
             print(f'API address: {api_endpoint}', file=sys.stderr)
             LOG.info(f'API address: {api_endpoint}')
-            response = requests.get(api_endpoint, cert=cert, verify=verify)
+            response = requests.get(api_endpoint, headers=headers, verify=False)
         except Exception as e:
             error = f"An error ocurred while trying to retrieve the information, please rewrite the question and try again.\n Error: {e}"
             LOG.warning(error)
@@ -104,7 +115,7 @@ class k8s_request():
         if response.status_code == 200:
             # Filter response for undesired namespaces
             filtered_response = self.filter_response(response)
-            buit_text_response = f"API {api_endpoint} response = {filtered_response}"
+            buit_text_response = f"API {api_endpoint} response from {self.name} = {filtered_response}"
             return buit_text_response
         else:
             error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
@@ -114,20 +125,23 @@ class k8s_request():
 
 class stx_request():
 
-    def __init__(self, user_query, key):
+    def __init__(self, user_query, key, instance):
         # Load env variables
-        self.oam_ip = os.environ['OAM_IP']
+        self.auth_url = instance['URL']
         self.user = os.environ['STX_USER']
         self.password = os.environ['STX_PASSWORD']
+        self.name = instance['name']
+
+        # Necessary API address
+        pattern = r"(https?)://(?:\d{1,3}\.){3}\d{1,3}:"
+        match = re.search(pattern, self.auth_url)
+        self.api_server_url = match.group(0)
 
         # Necessary token
         self.token = self.get_token()
 
         # API key
         self.api_key = key
-
-        # Necessary API address
-        self.api_server_url = f"http://{self.oam_ip}:"
 
         # User query
         self.query = user_query
@@ -195,7 +209,7 @@ class stx_request():
             return error
 
         if response.status_code == 200:
-            str_response = f"StarlingX API response = {response.text}"
+            str_response = f"StarlingX API response from {self.name} = {response.text}"
             return str_response
         else:
             error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
@@ -205,7 +219,7 @@ class stx_request():
 
 
     def get_token(self):
-        url = f"http://{self.oam_ip}:5000/v3/auth/tokens"
+        url = f"{self.auth_url}/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
@@ -232,8 +246,10 @@ class stx_request():
 
         try:
             response = requests.post(url, headers=headers, json=data)
-        except:
-            return "An error ocurred while trying to retrieve the authentication for the StarlingX APIs."
+        except Exception as e:
+            error = f"An error ocurred while trying to retrieve the authentication for the StarlingX APIs. Error:{e}"
+            LOG.error(error)
+            return error
 
         if response.status_code == 201:
             # Get token from response

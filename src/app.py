@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 import re
@@ -20,6 +21,8 @@ from constants import CLIENT_ERROR_MSG, LOG
 def initiate_sessions():
     global sessions
     sessions = {}
+    global node_list
+    node_list = create_instance_list()
 
 
 def get_session(session_id):
@@ -182,18 +185,93 @@ def define_api_pool(query, session):
 
 
 def api_response(query, session):
+    instance = define_system(query)
+    print(f'Query being made to {instance["name"]}', file=sys.stderr)
+    LOG.info(f'Query being made to {instance["name"]}')
+
     print('Defining API pool', file=sys.stderr)
     LOG.info('Defining API pool')
     pool = define_api_pool(query, session)
     print(f'LLM defined {pool} as the API subject', file=sys.stderr)
     LOG.info(f'LLM defined {pool} as the API subject')
     if pool == "Kubernetes":
-        bot = k8s_request(query, OPENAI_API_KEY)
+        bot = k8s_request(query, OPENAI_API_KEY, instance)
         response = k8s_request.get_API_response(bot)
     elif pool == "StarlingX":
-        bot = stx_request(query, OPENAI_API_KEY)
+        bot = stx_request(query, OPENAI_API_KEY, instance)
         response = stx_request.get_API_response(bot)
     else:
         response = CLIENT_ERROR_MSG
 
     return response
+
+
+def define_system(query):
+    # Initiate OpenAI
+    llm = ChatOpenAI(openai_api_key = OPENAI_API_KEY, model= "gpt-4-turbo-preview",temperature=0)
+
+    # Get list of all instances
+    instance_list = node_list
+
+    # Expected llm response format
+    format_response = "name: <name>,URL: <URL>,type: <type>,token: <token>"
+
+    # Create prompt
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", f"Pretend that you are a system that choses a node in a Distributed Cloud environment.\nYour job is to define which of the instances in the context the user is asking about. Make sure that only 1 is given in your response, the answer will never be more than 1 instance. If the user did not specified which instance he wants the information, you will provide the information of the instance that contains central cloud as type.\nYour answer will follow the format: {format_response}"),
+        ("user", "Context:{context} \n\n\n Question:{question}")
+    ])
+
+    output_parser = StrOutputParser()
+    chain = prompt | llm | output_parser
+
+    #Get completion
+    completion = chain.invoke({"context":instance_list, "question": query})
+
+    pairs = completion.split(',')
+    node_dict = {}
+
+    # Iterate over each key-value pair
+    for pair in pairs:
+        # Split each pair based on colon
+        key, value = pair.split(': ')
+
+        # Remove leading and trailing whitespaces from key and value
+        key = key.strip()
+        value = value.strip()
+
+        # Assign key-value pair to the dictionary
+        node_dict[key] = value
+
+    return node_dict
+
+
+def create_instance_list():
+    # Create list
+    instance_list = []
+
+    # Add the system controller as first item on the list
+    controller = {"name":"System Controller",
+                  "URL":os.environ['OAM_IP'],
+                  "type":"central cloud",
+                  "token":os.environ['TOKEN']}
+    instance_list.append(controller)
+
+    try:
+        # Load subclouds information
+        with open("subclouds.json", "r") as f:
+            data = json.load(f)
+
+        for item in data:
+            new_subcloud = {
+            "name": item["name"],
+            "URL": item["URL"],
+            "type": "subcloud",
+            "token": item["k8s_token"]
+            }
+
+            instance_list.append(new_subcloud)
+    except:
+        LOG.warning("No subcloud information was added to the list of instances")
+
+    return instance_list

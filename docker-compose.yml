@@ -15,3 +15,4 @@ services:
       OAM_IP: ${oam_ip}
       STX_USER: ${user}
       STX_PASSWORD: ${password}
+      TOKEN: ${k8s_token}
