@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from constants import CLIENT_ERROR_MSG, LOG
 import requests
+import re
 import os
 
 class k8s_request():
@@ -12,7 +13,10 @@ class k8s_request():
     # def __init__(self):
     def __init__(self, user_query, key, instance):
         # Get IP
-        self.oam_ip = instance['URL']
+        ip = instance['URL']
+        pattern = r"(https?)://(?:\d{1,3}\.){3}\d{1,3}:"
+        match = re.search(pattern, ip)
+        self.oam_ip = match.group(0)
 
         # Get name
         self.name = instance['name']
@@ -31,7 +35,7 @@ class k8s_request():
             self.api_server_url = f"{self.oam_ip}:6443"
         else:
             secure_oam = self.oam_ip.replace("http://", "https://")
-            self.api_server_url = f"{secure_oam}:6443"
+            self.api_server_url = f"{secure_oam}6443"
 
         # User query
         self.query = user_query
@@ -123,13 +127,15 @@ class stx_request():
 
     def __init__(self, user_query, key, instance):
         # Load env variables
-        self.oam_ip = instance['URL']
+        self.auth_url = instance['URL']
         self.user = os.environ['STX_USER']
         self.password = os.environ['STX_PASSWORD']
         self.name = instance['name']
 
         # Necessary API address
-        self.api_server_url = f"{self.oam_ip}:"
+        pattern = r"(https?)://(?:\d{1,3}\.){3}\d{1,3}:"
+        match = re.search(pattern, self.auth_url)
+        self.api_server_url = match.group(0)
 
         # Necessary token
         self.token = self.get_token()
@@ -213,7 +219,7 @@ class stx_request():
 
 
     def get_token(self):
-        url = f"{self.api_server_url}15000/v3/auth/tokens"
+        url = f"{self.auth_url}/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
