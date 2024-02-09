@@ -1,0 +1,5 @@
+{
+  "name": "subcloud_name",
+  "URL": "subcloud_url",
+  "k8s_token": "subcloud_k8s_token"
+}

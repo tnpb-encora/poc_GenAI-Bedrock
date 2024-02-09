@@ -7,9 +7,7 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - /etc/kubernetes/pki/apiserver-kubelet-client.crt:/app/certs/apiserver-kubelet-client.crt
-      - /etc/kubernetes/pki/apiserver-kubelet-client.key:/app/certs/apiserver-kubelet-client.key
-      - /etc/kubernetes/pki/ca.crt:/app/certs/ca.crt
+      - ./subclouds.json:/app/subclouds.json
     environment:
       OPENAI_API_KEY: ${openai_key}
       OAM_IP: ${oam_ip}
