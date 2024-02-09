@@ -27,7 +27,11 @@ class k8s_request():
         self.api_key = key
 
         # Necessary API address
-        self.api_server_url = f"https://{self.oam_ip}:6443"
+        if "https" in self.oam_ip:
+            self.api_server_url = f"{self.oam_ip}:6443"
+        else:
+            secure_oam = self.oam_ip.replace("http://", "https://")
+            self.api_server_url = f"{secure_oam}:6443"
 
         # User query
         self.query = user_query
@@ -44,7 +48,7 @@ class k8s_request():
 
         # Guarantee that chatbot don't use alucinated API for k8s version
         if "version" in api_endpoint:
-            api_endpoint = f"https://{self.oam_ip}:6443/version"
+            api_endpoint = f"{self.api_server_url}/version"
 
         return api_endpoint
 
@@ -131,7 +135,7 @@ class stx_request():
         self.api_key = key
 
         # Necessary API address
-        self.api_server_url = f"http://{self.oam_ip}:"
+        self.api_server_url = self.oam_ip
 
         # User query
         self.query = user_query
@@ -209,7 +213,7 @@ class stx_request():
 
 
     def get_token(self):
-        url = f"http://{self.oam_ip}:5000/v3/auth/tokens"
+        url = f"{self.api_server_url}:5000/v3/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
