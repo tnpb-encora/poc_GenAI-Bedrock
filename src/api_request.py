@@ -128,14 +128,14 @@ class stx_request():
         self.password = os.environ['STX_PASSWORD']
         self.name = instance['name']
 
+        # Necessary API address
+        self.api_server_url = f"{self.oam_ip}:"
+
         # Necessary token
         self.token = self.get_token()
 
         # API key
         self.api_key = key
-
-        # Necessary API address
-        self.api_server_url = self.oam_ip
 
         # User query
         self.query = user_query
@@ -213,7 +213,7 @@ class stx_request():
 
 
     def get_token(self):
-        url = f"{self.api_server_url}:5000/v3/auth/tokens"
+        url = f"{self.api_server_url}15000/v3/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
@@ -240,8 +240,10 @@ class stx_request():
 
         try:
             response = requests.post(url, headers=headers, json=data)
-        except:
-            return "An error ocurred while trying to retrieve the authentication for the StarlingX APIs."
+        except Exception as e:
+            error = f"An error ocurred while trying to retrieve the authentication for the StarlingX APIs. Error:{e}"
+            LOG.error(error)
+            return error
 
         if response.status_code == 201:
             # Get token from response

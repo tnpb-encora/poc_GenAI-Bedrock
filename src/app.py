@@ -234,7 +234,7 @@ def define_system(query):
     # Iterate over each key-value pair
     for pair in pairs:
         # Split each pair based on colon
-        key, value = pair.split(':')
+        key, value = pair.split(': ')
 
         # Remove leading and trailing whitespaces from key and value
         key = key.strip()
