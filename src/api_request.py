@@ -32,7 +32,7 @@ class k8s_request():
 
         # Necessary API address
         if "https" in self.oam_ip:
-            self.api_server_url = f"{self.oam_ip}:6443"
+            self.api_server_url = f"{self.oam_ip}6443"
         else:
             secure_oam = self.oam_ip.replace("http://", "https://")
             self.api_server_url = f"{secure_oam}6443"
@@ -202,7 +202,7 @@ class wr_request():
         try:
             print(f'API address: {url}', file=sys.stderr)
             LOG.info(f'API address: {url}')
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, verify=False)
         except Exception as e:
             error = f"An error ocurred while trying to retrieve the information, please rewrite the question and try again.\n Error: {e}"
             LOG.warning(error)
@@ -219,7 +219,7 @@ class wr_request():
 
 
     def get_token(self):
-        url = f"{self.auth_url}/auth/tokens"
+        url = f"{self.auth_url}/v3/auth/tokens"
         headers = {
             "Content-Type": "application/json"
         }
