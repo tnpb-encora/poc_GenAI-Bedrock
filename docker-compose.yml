@@ -2,15 +2,15 @@ version: '3.7'
 services:
   poc_genAI:
     image: <image_name>:<tag_name>
-    container_name: stx-chatbot-be
-    hostname: stx-chatbot-be
+    container_name: wrc-chatbot-be
+    hostname: wrc-chatbot-be
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./subclouds.json:/app/src/subclouds.json
+      - ./subclouds.json:/app/subclouds.json
     environment:
       OPENAI_API_KEY: ${openai_key}
       OAM_IP: ${oam_ip}
-      STX_USER: ${user}
-      STX_PASSWORD: ${password}
+      WR_USER: ${user}
+      WR_PASSWORD: ${password}
       TOKEN: ${k8s_token}
