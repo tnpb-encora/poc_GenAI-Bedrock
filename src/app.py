@@ -226,8 +226,9 @@ def define_system(query):
                       {"role": "user", "content": f"List of available instances: {node_list}\nUser query: {query}\n\n{user_prompt}"}]
         )
 
-    print(completion.choices[0].message.content)
-    name = completion.choices[0].message.content.split(":")[1].strip()
+    print(f'Completion: {completion.choices[0].message.content}', file=sys.stderr)
+    name = completion.choices[0].message.content.split(":")[1].strip().replace(".", "")
+    print(f'Result after normalization: {name}', file=sys.stderr)
     node_dict = {}
 
     # Iterate over each key-value pair
