@@ -84,17 +84,17 @@ def create_vectorstore(llm):
 
 
 def ask(query, session):
-    query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'."
+    query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'. Unless the user explicitly ask for commands you will not provide any."
     LOG.info(f"User query: {query}")
     response = session['generator'].invoke(query_completion)
 
     print(f'######{response}', file=sys.stderr)
     client = OpenAI(api_key=OPENAI_API_KEY)
-    prompt_status = client.chat.completions.create(model='gpt-4',
+    prompt_status = client.chat.completions.create(model='gpt-3.5-turbo',
                                                    messages=[{"role": "system",
-                                                              "content": "Your role is to analyze the context of a text. You should check whether the text indicates that there is information about a subject or not. If the text contains expressions like 'Im sorry', or 'no context', or 'no information', or 'i don't know', perhaps it is saying that there is not enough information, therefore the context is negative. A context will also be negative if the text says that it doesn't have access to the information."},
+                                                              "content": "Your task is to understand the context of a text. Look for clues indicating whether the text provides information about a subject. If you come across phrases such as 'I'm sorry', 'no context', 'no information', or 'I don't know', it likely means there isn't enough information available. Similarly, if the text mentions not having access to the information, or if it offers directives without the user requesting them explicitly, the context is negative."},
                                                              {"role": "user",
-                                                              "content": f"Based on the following text, check if the general context indicates that there is information about what is being asked or not. Make sure to answer only the words 'positive' if there is information, or 'negative' if there isn't. Don't answer nothing besides it: {response['answer']}"}])
+                                                              "content": f"Based on the following text, check if the general context indicates that there is information about what is being asked or not. Make sure to answer only the words 'positive' if there is information, or 'negative' if there isn't. Don't answer nothing besides it.\nUser query {query}\nResponse: {response['answer']}"}])
     print(f'prompt status: {prompt_status.choices[0].message.content}', file=sys.stderr)
     if 'negative' in prompt_status.choices[0].message.content.lower():
         LOG.info("Negative response from LLM")
@@ -208,41 +208,32 @@ def api_response(query, session):
 
 def define_system(query):
     # Initiate OpenAI
-    llm = ChatOpenAI(openai_api_key = OPENAI_API_KEY, model= "gpt-4-turbo-preview",temperature=0)
-
-    # Get list of all instances
-    instance_list = node_list
+    client = OpenAI(api_key=OPENAI_API_KEY)
 
     # Expected llm response format
-    format_response = "name: <name>,URL: <URL>,type: <type>,token: <token>"
+    format_response = "name: <name>"
 
     # Create prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", f"Pretend that you are a system that choses a node in a Distributed Cloud environment.\nYour job is to define which of the instances in the context the user is asking about. Make sure that only 1 is given in your response, the answer will never be more than 1 instance. If the user did not specified which instance he wants the information, you will provide the information of the instance that contains central cloud as type.\nYour answer will follow the format: {format_response}"),
-        ("user", "Context:{context} \n\n\n Question:{question}")
-    ])
+    system_prompt = f"You are a system that choses a node in a Distributed Cloud environment. Your job is to define which of the instances given in the context, the user is asking about."
+    user_prompt = f"Make sure that only 1 is given in your response, the answer will never be more than 1 instance. If the user did not specified which instance he wants the information, you will provide the information of the instance that contains central cloud as type.\nYour answer will follow the format: {format_response}. Make sure this format is followed and nothing else is given in the your response."
 
-    output_parser = StrOutputParser()
-    chain = prompt | llm | output_parser
 
     #Get completion
-    completion = chain.invoke({"context":instance_list, "question": query})
+    completion = client.chat.completions.create(
+            model="gpt-4-turbo-preview",
+            temperature=0.5,
+            messages=[{"role": "system", "content": system_prompt},
+                      {"role": "user", "content": f"List of available instances: {node_list}\nUser query: {query}\n\n{user_prompt}"}]
+        )
 
-    pairs = completion.split(',')
+    print(completion.choices[0].message.content)
+    name = completion.choices[0].message.content.split(":")[1].strip()
     node_dict = {}
 
     # Iterate over each key-value pair
-    for pair in pairs:
-        # Split each pair based on colon
-        key, value = pair.split(': ')
-
-        # Remove leading and trailing whitespaces from key and value
-        key = key.strip()
-        value = value.strip()
-
-        # Assign key-value pair to the dictionary
-        node_dict[key] = value
-
+    for node in node_list:
+        if node['name'] == name:
+            node_dict = node
     return node_dict
 
 
