@@ -29,6 +29,46 @@
             "url": "8119/v1.0/alarms",
             "method": "GET",
             "action": "Summarizes alarms from all subclouds"
+        },
+        {
+            "url": "6385/v1/isystems",
+            "method": "GET",
+            "action": "Shows attributes of the System object"
+        },
+        {
+            "url": "6385/v1/idns",
+            "method": "GET",
+            "action": "Shows attributes of the DNS object"
+        },
+        {
+            "url": "6385/v1/intp",
+            "method": "GET",
+            "action": "Shows attributes of the NTP object"
+        },
+        {
+            "url": "6385/v1/registry_image",
+            "method": "GET",
+            "action": "List images in the local Docker registry"
+        },
+        {
+            "url": "15491/v1/query",
+            "method": "GET",
+            "action": "Lists all patches in the patching system"
+        },
+        {
+            "url": "15491/v1/query_hosts",
+            "method": "GET",
+            "action": "List pacthing information of all hosts"
+        },
+        {
+            "url": "7777/v1/services",
+            "method": "GET",
+            "action": "List all services running"
+        },
+        {
+            "url": "6385/v1/clusters",
+            "method": "GET",
+            "action": "Lists all cluster entities"
         }
     ]
 }
