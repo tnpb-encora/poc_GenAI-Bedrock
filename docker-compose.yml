@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./subclouds.json:/app/subclouds.json
+      - ./subclouds.json:/app/src/subclouds.json
     environment:
       OPENAI_API_KEY: ${openai_key}
       OAM_IP: ${oam_ip}

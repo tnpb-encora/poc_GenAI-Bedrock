@@ -4,6 +4,9 @@ FROM python:3.8
 # Set the working directory inside the container
 WORKDIR /app
 
+# Create src directory
+RUN mkdir src
+
 # Copy the requirements file into the container
 COPY requirements/requirements.txt .
 

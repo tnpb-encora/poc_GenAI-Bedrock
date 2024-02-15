@@ -1,0 +1,8 @@
+// This is a model only, do not use it for tests. The subclouds.json needs to be used in the same directory as the docker-compose.yaml
+[
+  {
+    "name": "subcloud_name",
+    "URL": "subcloud_url",
+    "k8s_token": "subcloud_k8s_token"
+  }
+]
