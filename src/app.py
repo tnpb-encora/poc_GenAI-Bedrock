@@ -13,7 +13,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from api_request import k8s_request, stx_request
+from api_request import k8s_request, wr_request
 from openai import OpenAI
 from constants import CLIENT_ERROR_MSG, LOG
 
@@ -163,11 +163,11 @@ def is_api_key_valid(key):
 
 
 def define_api_pool(query, session):
-    # Use LLM to decide if Kubernetes or StarlingX API pool should be used.
-    complete_query = f"Based on the following query you will choose between StarlingX APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Starlingx or a Kubernetes API. Make sure that your response only contains the name StarlingX or the name Kubernetes and nothing else.\n\nUser query: {query}"
+    # Use LLM to decide if Kubernetes or Wind River API pool should be used.
+    complete_query = f"Based on the following query you will choose between Wind River APIs and Kubernetes APIs. You will not provide that specific API, only inform if it is a Wind River or a Kubernetes API. Make sure that your response only contains the name Wind River or the name Kubernetes and nothing else.\n\nUser query: {query}"
 
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an AI connected to a StarlingX system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."),
+        ("system", "You are an AI connected to a Wind River system and based on the user query you will define which set of APIs is best to retrieve the necessary information to answer the question."),
         ("user", "{input}")
     ])
 
@@ -178,8 +178,8 @@ def define_api_pool(query, session):
     print(f"###########{response}")
     if response.lower() == "kubernetes":
         return "Kubernetes"
-    elif response.lower() == "starlingx":
-        return "StarlingX"
+    elif response.lower() == "wind river":
+        return "Wind River"
     else:
         return "Undefined"
 
@@ -197,9 +197,9 @@ def api_response(query, session):
     if pool == "Kubernetes":
         bot = k8s_request(query, OPENAI_API_KEY, instance)
         response = k8s_request.get_API_response(bot)
-    elif pool == "StarlingX":
-        bot = stx_request(query, OPENAI_API_KEY, instance)
-        response = stx_request.get_API_response(bot)
+    elif pool == "Wind River":
+        bot = wr_request(query, OPENAI_API_KEY, instance)
+        response = wr_request.get_API_response(bot)
     else:
         response = CLIENT_ERROR_MSG
 
