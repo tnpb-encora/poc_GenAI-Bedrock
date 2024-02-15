@@ -250,7 +250,7 @@ def create_instance_list():
 
     try:
         # Load subclouds information
-        with open("subclouds.json", "r") as f:
+        with open("src/subclouds.json", "r") as f:
             data = json.load(f)
 
         for item in data:
