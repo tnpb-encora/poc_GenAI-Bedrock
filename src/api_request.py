@@ -123,13 +123,13 @@ class k8s_request():
             return error
 
 
-class stx_request():
+class wr_request():
 
     def __init__(self, user_query, key, instance):
         # Load env variables
         self.auth_url = instance['URL']
-        self.user = os.environ['STX_USER']
-        self.password = os.environ['STX_PASSWORD']
+        self.user = os.environ['WR_USER']
+        self.password = os.environ['WR_PASSWORD']
         self.name = instance['name']
 
         # Necessary API address
@@ -146,12 +146,12 @@ class stx_request():
         # User query
         self.query = user_query
 
-        # Embedded list of StarlingX APIs
+        # Embedded list of Wind River APIs
         self.apis = self.load_embedded_apis()
 
 
     def load_embedded_apis(self):
-        with open ("Stx_apis.json", "r") as f:
+        with open ("wr_apis.json", "r") as f:
             api_list = f.read()
 
         return api_list
@@ -174,7 +174,7 @@ class stx_request():
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a StarlingX cluster.\n\nYou will look in the context for the available APIs in a StarlingX cluster.\n\nMake sure the provided endpoint is present on the provided context and check the action of the APIs to provide the ideal url for the user question.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
+        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a Wind River cluster.\n\nYou will look in the context for the available APIs in a Wind River cluster.\n\nMake sure the provided endpoint is present on the provided context and check the action of the APIs to provide the ideal url for the user question.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
         ("user", "Context:{context} \n\n\n Question:{question}")
         ])
 
@@ -209,7 +209,7 @@ class stx_request():
             return error
 
         if response.status_code == 200:
-            str_response = f"StarlingX API response from {self.name} = {response.text}"
+            str_response = f"Wind River API response from {self.name} = {response.text}"
             return str_response
         else:
             error = f"Error trying to make API request:\n {response.status_code}, {response.text}"
@@ -247,7 +247,7 @@ class stx_request():
         try:
             response = requests.post(url, headers=headers, json=data)
         except Exception as e:
-            error = f"An error ocurred while trying to retrieve the authentication for the StarlingX APIs. Error:{e}"
+            error = f"An error ocurred while trying to retrieve the authentication for the Wind River APIs. Error:{e}"
             LOG.error(error)
             return error
 
