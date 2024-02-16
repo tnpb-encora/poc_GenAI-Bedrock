@@ -245,7 +245,7 @@ class wr_request():
         }
 
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, verify=False)
         except Exception as e:
             error = f"An error ocurred while trying to retrieve the authentication for the Wind River APIs. Error:{e}"
             LOG.error(error)
