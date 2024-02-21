@@ -3,17 +3,17 @@
         {
             "url": "18002/v1/alarms",
             "method": "GET",
-            "action": "Lists all active alarms"
+            "action": "Lists all active alarms in the host"
         },
         {
             "url": "18002/v1/alarms/<uuid>",
             "method": "GET",
-            "action": "Give additional information about the alarm with the given uuid"
+            "action": "Give additional information about the alarm with the given uuid. This API will only be used if a UUID is informed by the user"
         },
         {
             "url": "6385/v1/ihosts",
             "method": "GET",
-            "action": "Lists all host entities"
+            "action": "Lists all host entities and information about each of them. Information such as persinality, IP, state and other information for each host. Unless the user query says it wants the host information, this API should not be used."
         },
         {
             "url": "6385/v1/certificate",
@@ -23,17 +23,17 @@
         {
             "url": "8119/v1.0/subclouds",
             "method": "GET",
-            "action": "Lists all subclouds"
+            "action": "Lists all subclouds. This API will only be used in the central cloud"
         },
         {
             "url": "8119/v1.0/alarms",
             "method": "GET",
-            "action": "Summarizes alarms from all subclouds"
+            "action": "Summarizes alarms from all subclouds. This API will only be used in the central cloud"
         },
         {
             "url": "6385/v1/isystems",
             "method": "GET",
-            "action": "Shows attributes of the System object"
+            "action": "Shows attributes of the cloud system object, such as version, location, description, type, timezone and other information about the system. Preferbily this API should be used instead of ihosts, the exception is qhen the user specifies that it wants the information from a host."
         },
         {
             "url": "6385/v1/idns",

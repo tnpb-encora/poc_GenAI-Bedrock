@@ -131,6 +131,7 @@ class wr_request():
         self.user = os.environ['WR_USER']
         self.password = os.environ['WR_PASSWORD']
         self.name = instance['name']
+        self.type = instance['type']
 
         # Necessary API address
         pattern = r"(https?)://(?:\d{1,3}\.){3}\d{1,3}:"
@@ -174,7 +175,7 @@ class wr_request():
 
         # Create prompt
         prompt = ChatPromptTemplate.from_messages([
-        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a Wind River cluster.\n\nYou will look in the context for the available APIs in a Wind River cluster.\n\nMake sure the provided endpoint is present on the provided context and check the action of the APIs to provide the ideal url for the user question.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed."),
+        ("system", f"You are an API generator, based on the user question you will suggest the best API endpoint to retrieve the information from a Wind River cluster.\n\nYou will look in the context for the available APIs in a Wind River cluster.\n\nMake sure the provided endpoint is present on the provided context and check the action of the APIs to provide the ideal url for the user question. This user question is being made to a {self.type}.\n\nAlso make sure to only provide the API endpoint following the format: {format_response}. Guarantee that the format is followed. Read the entire context before providing an answer."),
         ("user", "Context:{context} \n\n\n Question:{question}")
         ])
 

@@ -84,7 +84,7 @@ def create_vectorstore(llm):
 
 
 def ask(query, session):
-    query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'. Unless the user explicitly ask for commands you will not provide any."
+    query_completion = query + ". If an API response is provided as context and in the provided API response doesn't have this information or no context is provided, make sure that your response is 'I don't know'. Unless the user explicitly ask for commands you will not provide any. Make sure to read the entire given context before giving your response."
     LOG.info(f"User query: {query}")
     response = session['generator'].invoke(query_completion)
 
@@ -116,9 +116,9 @@ def feed_vectorstore(query, session):
 
     print(f'API response: {response}', file=sys.stderr)
 
-    regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
-    if re.search(regex, response.lower()):
-        response = CLIENT_ERROR_MSG
+    # regex = r"(?=.*\binternal\b)(?=.*\bserver\b)(?=.*\berror\b).+"
+    # if re.search(regex, response.lower()):
+    #     response = CLIENT_ERROR_MSG
 
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     all_splits = text_splitter.split_text(response)
