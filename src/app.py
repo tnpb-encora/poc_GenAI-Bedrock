@@ -12,9 +12,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.schema.document import Document
 from langchain.memory.buffer import ConversationBufferMemory
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.llms import Bedrock
 from api_request import k8s_request, wr_request
-from openai import OpenAI
+import boto3
 from constants import CLIENT_ERROR_MSG, LOG
 
 
@@ -29,12 +29,12 @@ def get_session(session_id):
     return sessions.get(session_id)
 
 
-def new_session(model, temperature):
+def new_session(aws_model_id, temperature):
     # Create vectorstore
-    llm = ChatOpenAI(
-        model_name=model,
-        temperature=float(temperature),
-        openai_api_key=OPENAI_API_KEY)
+    llm = Bedrock(
+        credentials_profile_name="windriver-poc-user",
+        model_id=aws_model_id,
+        region_name='us-east-1')
     session_id = str(uuid.uuid4())
     memory, retriever = create_vectorstore(llm)
     # Create chat response generator
@@ -48,9 +48,9 @@ def new_session(model, temperature):
     generator.invoke(query)
 
     # Add session to sessions map
-    sessions[session_id] = {"generator": generator, "llm": llm, "id": session_id}
-    LOG.info(f"New session with ID: {session_id} initiated. Model: {model}, Temperature: {temperature}")
-    return sessions[session_id]
+    # sessions[session_id] = {"generator": generator, "llm": llm, "id": session_id}
+    # LOG.info(f"New session with ID: {session_id} initiated. Model: {model}, Temperature: {temperature}")
+    # return sessions[session_id]
 
 
 def create_logger():

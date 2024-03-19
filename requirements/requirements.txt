@@ -4,3 +4,4 @@ tiktoken
 chromadb==0.3.29
 flask-restful
 flask
+boto3
